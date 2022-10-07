@@ -84,56 +84,16 @@ def save_model(
     if settings is None:
         settings = {}
     settings["full_file"] = "h2o_save_location"
-    settings["model_file"] = "model_file"
-    settings["model_dir"] = "model_data_path"
+    settings["model_file"] = "pipeline.mojo"
+    settings["model_dir"] = "pipeline"
     with open(os.path.join(model_data_path, "h2o_dai.yaml"), "w") as settings_file:
         yaml.safe_dump(settings, stream=settings_file)
 
-    pyfunc.add_to_model(
-        mlflow_model,
-        loader_module="mlflow.h2o.dai",
-        data=model_data_subpath,
-        env=_CONDA_ENV_FILE_NAME,
-        code=code_dir_subpath,
-    )
-
     mlflow_model.add_flavor(
-        FLAVOR_NAME, data=model_data_subpath, code=code_dir_subpath
+        FLAVOR_NAME, data=model_data_subpath,  type="pipeline/mojo"
     )
 
     mlflow_model.save(os.path.join(path, MLMODEL_FILE_NAME))
-    if conda_env is None:
-        if pip_requirements is None:
-            default_reqs = get_default_pip_requirements()
-            # To ensure `_load_pyfunc` can successfully load the model during the dependency
-            # inference, `mlflow_model.save` must be called beforehand to save an MLmodel file.
-            inferred_reqs = mlflow.models.infer_pip_requirements(
-                path,
-                FLAVOR_NAME,
-                fallback=default_reqs,
-            )
-            default_reqs = sorted(set(inferred_reqs).union(default_reqs))
-        else:
-            default_reqs = None
-        conda_env, pip_requirements, pip_constraints = _process_pip_requirements(
-            default_reqs,
-            pip_requirements,
-            extra_pip_requirements,
-        )
-    else:
-        conda_env, pip_requirements, pip_constraints = _process_conda_env(conda_env)
-
-    with open(os.path.join(path, _CONDA_ENV_FILE_NAME), "w") as f:
-        yaml.safe_dump(conda_env, stream=f, default_flow_style=False)
-
-        # Save `constraints.txt` if necessary
-    if pip_constraints:
-        write_to(os.path.join(path, _CONSTRAINTS_FILE_NAME), "\n".join(pip_constraints))
-
-        # Save `requirements.txt`
-    write_to(os.path.join(path, _REQUIREMENTS_FILE_NAME), "\n".join(pip_requirements))
-
-    _PythonEnv.current().to_yaml(os.path.join(path, _PYTHON_ENV_FILE_NAME))
 
 
 def log_model(h2o_dai_model,
