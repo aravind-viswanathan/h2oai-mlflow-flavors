@@ -3,6 +3,11 @@ import warnings
 import yaml
 
 import mlflow
+import shutil
+import mlflow.utils.environment
+import mlflow.utils.model_utils
+
+from mlflow.exceptions import MlflowException
 from mlflow import pyfunc
 from mlflow.models import Model
 from mlflow.models.model import MLMODEL_FILE_NAME
@@ -40,8 +45,8 @@ FLAVOR_NAME = "h2o_driverless_ai"
 def save_model(
         h2o_dai_model,
         path,
+        model_type,
         conda_env=None,
-        code_paths=None,
         mlflow_model=None,
         settings=None,
         signature: ModelSignature = None,
@@ -56,7 +61,7 @@ def save_model(
     model_data_subpath = "model.h2o.dai"
     model_data_path = os.path.join(path, model_data_subpath)
     os.makedirs(model_data_path)
-    code_dir_subpath = _validate_and_copy_code_paths(code_paths, path)
+
 
     if mlflow_model is None:
         mlflow_model = Model()
@@ -64,26 +69,37 @@ def save_model(
         mlflow_model.signature = signature
     if input_example is not None:
         _save_example(mlflow_model, input_example, path)
+    if h2o_dai_model is not None:
+        print(h2o_dai_model)
+    else:
+        print("H20 DAI model is null")
 
     if settings is None:
         settings = {}
-    settings["full_file"] = "h2o_save_location"
-    settings["model_file"] = "pipeline.mojo"
-    settings["model_dir"] = "pipeline"
+    settings["full_file"] = h2o_dai_model
+    settings["model_file"] = _get_file_name(h2o_dai_model)
+    settings["model_dir"] = _get_dir_path(h2o_dai_model)
     with open(os.path.join(model_data_path, "h2o_dai.yaml"), "w") as settings_file:
         yaml.safe_dump(settings, stream=settings_file)
 
+    shutil.copy(h2o_dai_model, model_data_path+"/"+_get_file_name(h2o_dai_model))
+
     mlflow_model.add_flavor(
-        FLAVOR_NAME, data=model_data_subpath,  type="pipeline/mojo"
+        FLAVOR_NAME, data=model_data_subpath,  type=model_type
     )
 
     mlflow_model.save(os.path.join(path, MLMODEL_FILE_NAME))
 
+def _get_file_name(path):
+    return os.path.basename(path)
+
+def _get_dir_path(path):
+    return os.path.dirname(path)
 
 def log_model(h2o_dai_model,
             artifact_path,
+            model_type="pipeline/mojo",
             conda_env=None,
-            code_paths=None,
             registered_model_name=None,
             signature: ModelSignature = None,
             input_example: ModelInputExample = None,
@@ -92,16 +108,19 @@ def log_model(h2o_dai_model,
             **kwargs,
     ):
 
+        # if model_type != "pipeline/mojo"  or model_type != "scoring-pipeline" :
+        #     raise MlflowException.invalid_parameter_value("Invalid value for model_type. Valid values are pipeline/mojo or scoring-pipeline")
+
         return Model.log(
             artifact_path=artifact_path,
             flavor=h2o_mlflow_flavors.driverless,
             registered_model_name=registered_model_name,
             h2o_dai_model=h2o_dai_model,
             conda_env=conda_env,
-            code_paths=code_paths,
             signature=signature,
             input_example=input_example,
             pip_requirements=pip_requirements,
             extra_pip_requirements=extra_pip_requirements,
+            model_type = model_type,
             **kwargs,
         )
