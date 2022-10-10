@@ -98,7 +98,7 @@ def _get_dir_path(path):
 
 def log_model(h2o_dai_model,
             artifact_path,
-            model_type="pipeline/mojo",
+            model_type="dai/mojo_pipeline",
             conda_env=None,
             registered_model_name=None,
             signature: ModelSignature = None,
@@ -108,8 +108,10 @@ def log_model(h2o_dai_model,
             **kwargs,
     ):
 
-        # if model_type != "pipeline/mojo"  or model_type != "scoring-pipeline" :
-        #     raise MlflowException.invalid_parameter_value("Invalid value for model_type. Valid values are pipeline/mojo or scoring-pipeline")
+        valid_dai_model_types = ['dai/mojo_pipeline', 'dai/scoring_pipeline']
+        print("Received model_type---->",model_type)
+        if model_type not in valid_dai_model_types:
+            raise MlflowException.invalid_parameter_value("Invalid value for model_type. Valid values are pipeline/mojo or scoring-pipeline")
 
         return Model.log(
             artifact_path=artifact_path,
