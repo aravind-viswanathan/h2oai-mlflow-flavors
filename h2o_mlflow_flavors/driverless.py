@@ -71,8 +71,6 @@ def save_model(
         _save_example(mlflow_model, input_example, path)
     if h2o_dai_model is not None:
         print(h2o_dai_model)
-    else:
-        print("H20 DAI model is null")
 
     if settings is None:
         settings = {}
@@ -85,7 +83,7 @@ def save_model(
     shutil.copy(h2o_dai_model, model_data_path+"/"+_get_file_name(h2o_dai_model))
 
     mlflow_model.add_flavor(
-        FLAVOR_NAME, data=model_data_subpath,  type=model_type
+        FLAVOR_NAME,  type=model_type
     )
 
     mlflow_model.save(os.path.join(path, MLMODEL_FILE_NAME))
@@ -109,7 +107,6 @@ def log_model(h2o_dai_model,
     ):
 
         valid_dai_model_types = ['dai/mojo_pipeline', 'dai/scoring_pipeline']
-        print("Received model_type---->",model_type)
         if model_type not in valid_dai_model_types:
             raise MlflowException.invalid_parameter_value("Invalid value for model_type. Valid values are pipeline/mojo or scoring-pipeline")
 
