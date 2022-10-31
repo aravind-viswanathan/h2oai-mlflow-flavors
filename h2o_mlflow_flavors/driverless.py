@@ -16,22 +16,11 @@ from mlflow.models.signature import ModelSignature
 from mlflow.models.utils import ModelInputExample
 from mlflow.utils.docstring_utils import format_docstring, LOG_MODEL_PARAM_DOCS
 from mlflow.utils.environment import (
-    _mlflow_conda_env,
     _validate_env_arguments,
-    _process_pip_requirements,
-    _process_conda_env,
-    _CONDA_ENV_FILE_NAME,
-    _REQUIREMENTS_FILE_NAME,
-    _CONSTRAINTS_FILE_NAME,
-    _PYTHON_ENV_FILE_NAME,
-    _PythonEnv,
 )
 from mlflow.utils.requirements_utils import _get_pinned_requirement
 
 from mlflow.utils.model_utils import (
-    _get_flavor_configuration,
-    _validate_and_copy_code_paths,
-    _add_code_from_conf_to_system_path,
     _validate_and_prepare_target_save_path,
 )
 from mlflow.utils.file_utils import (
@@ -46,7 +35,7 @@ from h2o_mlflow_flavors.utils import zip_folder
 import h2o_mlflow_flavors
 
 FLAVOR_NAME = "h2o_driverless_ai"
-MOJO_FILE_LOCATION = "mojo-pipeline/pipeline.mojo"
+MOJO_FILE = "mojo-pipeline/pipeline.mojo"
 PY_SCORING_WHL_FILE_PATTERN = "scoring-pipeline/scoring_h2oai_experiment.*\.whl"
 PY_SCORING_FILE_NAME = "scorer"
 PY_SCORING_CUSTOM_RECIPES_FOLDER = "tmp"
@@ -140,7 +129,7 @@ def determine_model_file(model_type, h2o_dai_model, h2o_dai_model_download_locat
     h2o_dai_model_file = ""
 
     if model_type == 'dai/mojo_pipeline':
-        h2o_dai_model_file = unzip_specific_file(h2o_dai_model, MOJO_FILE_NAME)
+        h2o_dai_model_file = unzip_specific_file(h2o_dai_model, MOJO_FILE)
     elif model_type == 'dai/scoring_pipeline':
         location = h2o_dai_model_download_location + "/"
         minimal_model_file_location = location + "model"

@@ -21,7 +21,6 @@ def match_file_from_name_pattern(zip_file_name, pattern):
     with zipfile.ZipFile(zip_file_name) as archive:
         for info in archive.infolist():
             if re.match(pattern, info.filename):
-                print("Found the file and returning---->", info.filename)
                 return info.filename
 
     return None
