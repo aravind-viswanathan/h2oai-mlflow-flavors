@@ -37,6 +37,7 @@ import h2o_mlflow_flavors
 FLAVOR_NAME = "h2o_driverless_ai"
 MOJO_FILE = "mojo-pipeline/pipeline.mojo"
 PY_SCORING_WHL_FILE_PATTERN = "scoring-pipeline/scoring_h2oai_experiment.*\.whl"
+PY_SCORING_SUMMARY_FILE_PATTERN = "scoring-pipeline/h2oai_experiment_summary.*\.zip"
 PY_SCORING_FILE_NAME = "scorer"
 PY_SCORING_CUSTOM_RECIPES_FOLDER = "tmp"
 
@@ -126,16 +127,27 @@ def log_model(h2o_dai_artifact_location,
         )
 
 def determine_model_file(model_type, h2o_dai_model, h2o_dai_model_download_location):
-    h2o_dai_model_file = ""
-
     if model_type == 'dai/mojo_pipeline':
-        h2o_dai_model_file = unzip_specific_file(h2o_dai_model, MOJO_FILE)
+        return _minimise_mojo_scoring_model(h2o_dai_model)
     elif model_type == 'dai/scoring_pipeline':
-        location = h2o_dai_model_download_location + "/"
-        minimal_model_file_location = location + "model"
-        wheel_file  = match_file_from_name_pattern(h2o_dai_model, PY_SCORING_WHL_FILE_PATTERN)
-        unzip_specific_file(h2o_dai_model, wheel_file, minimal_model_file_location)
-        unzip_specific_folder(h2o_dai_model,PY_SCORING_CUSTOM_RECIPES_FOLDER,minimal_model_file_location)
-        h2o_dai_model_file = zip_folder(minimal_model_file_location, location + PY_SCORING_FILE_NAME)
+        return _minimise_python_scoring_pipeline_model(h2o_dai_model, h2o_dai_model_download_location)
 
-    return h2o_dai_model_file
+def _minimise_mojo_scoring_model(h2o_dai_model):
+    if match_file_from_name_pattern(h2o_dai_model, MOJO_FILE) is None:
+        raise MlflowException.invalid_parameter_value("Not a valid DAI MOJO Pipeline - pipeline.mojo not present in the provided model.")
+    directory = "/tmp"
+    unzip_specific_file(h2o_dai_model, MOJO_FILE, directory=directory)
+    return directory + "/" + MOJO_FILE
+
+def _minimise_python_scoring_pipeline_model(h2o_dai_model, h2o_dai_model_download_location):
+    location = h2o_dai_model_download_location + "/"
+    minimal_model_file_location = location + "model"
+    wheel_file = match_file_from_name_pattern(h2o_dai_model, PY_SCORING_WHL_FILE_PATTERN)
+    summary_file = match_file_from_name_pattern(h2o_dai_model, PY_SCORING_SUMMARY_FILE_PATTERN)
+
+    if wheel_file is None or summary_file is None:
+        raise MlflowException.invalid_parameter_value("Not a valid DAI Scoring Pipeline - Experiment wheel or Summary file not present in the provided model")
+
+    unzip_specific_file(h2o_dai_model, wheel_file, summary_file, directory=minimal_model_file_location)
+    unzip_specific_folder(h2o_dai_model, PY_SCORING_CUSTOM_RECIPES_FOLDER, directory=minimal_model_file_location)
+    return zip_folder(minimal_model_file_location, location + PY_SCORING_FILE_NAME)

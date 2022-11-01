@@ -4,17 +4,18 @@ import re
 
 from shutil import make_archive
 
-def unzip_specific_file(zip_file_name, extract_file_name, directory="/tmp"):
+def unzip_specific_file(zip_file_name, *extract_file_name, directory="/tmp"):
     with zipfile.ZipFile(zip_file_name, 'r') as zip_ref:
-        zip_ref.extract(extract_file_name, directory)
+        for file_name in extract_file_name:
+                zip_ref.extract(file_name, directory)
 
-    return directory+"/"+extract_file_name
 
 def unzip_specific_folder(zip_file_name, extract_folder_name, directory="/tmp"):
     with zipfile.ZipFile(zip_file_name) as archive:
-        names_foo = [i for i in archive.namelist() if i.startswith(extract_folder_name)]
-        for file in names_foo:
-            archive.extract(file, directory)
+        for folder_name in extract_folder_name:
+            names_foo = [i for i in archive.namelist() if i.startswith(folder_name)]
+            for file in names_foo:
+                archive.extract(file, directory)
 
 
 def match_file_from_name_pattern(zip_file_name, pattern):
