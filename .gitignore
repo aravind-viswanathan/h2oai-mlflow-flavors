@@ -5,3 +5,4 @@
 .idea
 output
 .DS_Store
+/h2oai_mlflow_flavors.egg-info/

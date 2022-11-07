@@ -1,9 +1,9 @@
 from setuptools import setup
 
 setup(
-    name="mlflow_dai_flavor",
+    name="h2oai_mlflow_flavors",
     version="0.1",
-    description="DAI Flavor",
+    description="MLflow floavors for H2O AI Models",
     author="H2O.ai",
     packages=["h2o_mlflow_flavors"],
     install_requires=["mlflow"],
